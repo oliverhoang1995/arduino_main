@@ -46,7 +46,7 @@ Dùng Arduino IDE thay cho PlatformIO: xem `../MayRuaChen/` (sketch đã sắp s
 | Cảm biến cửa | D22 | cửa**đóng**                                       |
 | Phao Tank       | D23 | Tank**thiếu** nước                                |
 | Phao Boiler     | D24 | Boiler**thiếu** nước                              |
-| Nút POWER      | D26 | đang nhấn                                                |
+| Nút POWER      | D9  | đang nhấn                                                |
 | NTC 10K         | A0  | 5V — Rs 10 kΩ 1% — A0 — NTC — GND, tụ 100 nF tại A0 |
 
 Nếu tiếp điểm là **NC** thay vì NO: đổi `invert` thành `true` trong `Config.h`, không sửa code.

@@ -20,8 +20,10 @@ struct InputPin {
 constexpr InputPin kDoor{22, false};         // ACTIVE = cua DONG
 constexpr InputPin kTankFloat{23, false};    // ACTIVE = Tank THIEU nuoc
 constexpr InputPin kBoilerFloat{24, false};  // ACTIVE = Boiler THIEU nuoc
-constexpr InputPin kBtnPower{26, false};     // ACTIVE = dang nhan
+constexpr InputPin kBtnPower{9, false};      // ACTIVE = dang nhan
 
+// Nut POWER doi tu D26 sang D9: D9 nam tren hang chan don D0-D13, so in tren
+// board ro rang, kho dem nham hon hang chan doi D22-D53. D26 gio bo trong.
 // D25 (MODE), D27 (UP), D28 (DOWN): chua dung - xem plans_02/02-design.md Q-02.
 
 constexpr uint8_t kNtcPin = 54;  // = A0 tren Mega 2560 (Io.cpp co static_assert kiem tra)

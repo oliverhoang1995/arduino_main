@@ -64,15 +64,123 @@ Nếu LCD sáng đèn nhưng không ra chữ / ra ký tự rác:
 | Cảm biến cửa (ACTIVE = đóng)       | D22 |     | Bơm rửa              | D2  |
 | Phao Tank (ACTIVE = thiếu nước)     | D23 |     | Bơm tráng            | D3  |
 | Phao Boiler (ACTIVE = thiếu nước)   | D24 |     | Thanh nhiệt Boiler    | D4  |
-| Nút POWER                           | D26 |     | Van cấp nước Tank    | D5  |
-| NTC 10K                              | A0  |     | Van cấp nước Boiler  | D6  |
+| Nút POWER                           | D9  |     | Van cấp nước Tank    | D5  |
+| NTC 10K (sơ đồ ở mục 5)            | A0  |     | Van cấp nước Boiler  | D6  |
 |                                      |     |     | LCD I2C SDA / SCL     | D20 / D21 |
 
 Đổi pin, đổi tiếp điểm NO↔NC, đổi relay active-HIGH: **chỉ sửa `src/Config.h`**.
 
+Đấu dây xong mà một tín hiệu không ăn: nạp sketch chẩn đoán `../KiemTraChan/KiemTraChan.ino`,
+nó in ra đúng số hiệu chân đang bị nối GND — biết ngay là cắm nhầm lỗ hay đứt dây.
+Thử xong nạp lại `MayRuaChen.ino`.
+
 ---
 
-## 5. Khi sửa code
+## 5. Mạch phân áp NTC ở chân A0
+
+### 5.1. Mạch thật
+
+```
+   +5V ───────┬─────────────────────────
+              │
+             ┌┴┐
+             │ │   Rs = 10 kΩ  1%   (điện trở cố định)
+             │ │
+             └┬┘
+              │
+    A0 ───────┼──────────────┬──────────   ← Arduino đo điện áp ở đây
+              │              │
+             ┌┴┐            ═╪═  C = 100 nF
+             │ │   NTC 10K   │   (tụ lọc nhiễu, đặt sát chân A0)
+             │ │   β = 3950  │
+             └┬┘             │
+              │              │
+   GND ───────┴──────────────┴──────────
+```
+
+**NTC nằm ở nhánh dưới.** Hệ quả cần nhớ khi soi log: nước càng nóng → điện trở NTC càng
+giảm → điện áp A0 càng thấp → **số ADC càng nhỏ**. Ngược chiều trực giác.
+
+Công thức chương trình đang dùng (`src/Ntc.cpp`):
+
+```
+Rntc = 10000 × ADC / (1023 − ADC)
+1/T  = 1/298.15 + ln(Rntc/10000) / 3950
+```
+
+Dây NTC dùng cáp có vỏ chống nhiễu, đi tách dây động lực ≥ 10 cm.
+
+### 5.2. Test bàn — điện trở cố định
+
+Thay đúng con NTC bằng một điện trở thường, **giữ nguyên Rs 10 kΩ ở nhánh trên**:
+
+```
+   +5V ───────┬──────────
+              │
+             ┌┴┐
+             │ │   Rs = 10 kΩ      ← giữ nguyên, luôn luôn 10k
+             └┬┘
+              │
+    A0 ───────┼──────────
+              │
+             ┌┴┐
+             │ │   Rtest           ← đổi con này để giả lập nhiệt độ
+             └┬┘
+              │
+   GND ───────┴──────────
+```
+
+| Rtest    | Điện áp tại A0 | ADC | Nhiệt độ máy đọc | Máy sẽ làm gì                                     |
+| -------- | --------------- | --- | ------------------ | -------------------------------------------------- |
+| 10 kΩ   | 2.50 V          | 512 | 25 °C             | HEAT, thanh nhiệt bật                             |
+| 4.7 kΩ  | 1.60 V          | 327 | 43 °C             | HEAT, thanh nhiệt bật                             |
+| **3.0 kΩ** | **1.15 V**   | **235** | **55 °C**     | vừa chạm ngưỡng → **READY**                    |
+| **2.2 kΩ** | **0.90 V**   | **184** | **63 °C**     | READY, thanh nhiệt vẫn bật — **nên dùng để test** |
+| 1.5 kΩ  | 0.65 V          | 133 | 75 °C             | READY, thanh nhiệt vẫn bật                       |
+| **1.2 kΩ** | **0.54 V**   | **110** | **82 °C**     | điểm thanh nhiệt **bật lại** (setpoint − 3 °C) |
+| **1.0 kΩ** | **0.45 V**   | **93**  | **88 °C**     | trên 85 °C → thanh nhiệt **tắt**                |
+
+Cặp **1.2 kΩ và 1.0 kΩ** đáng thử nhất: đổi qua đổi lại giữa hai con này là thấy chữ `H`
+trong log bật/tắt đúng vùng chết 82–85 °C, đồng thời kiểm tra luôn ràng buộc min ON/OFF 5 giây.
+
+### 5.3. Test bàn — biến trở 10 kΩ (chỉnh được liên tục)
+
+Biến trở đã tự nó là mạch phân áp rồi, **không cần Rs 10k nữa**:
+
+```
+                 biến trở 10 kΩ
+              ┌──────────────────┐
+   +5V ───────┤ chân 1           │
+              │                  │
+              │   ◄══════════════╡ chân 2 (con chạy) ────► A0
+              │                  │
+   GND ───────┤ chân 3           │
+              └──────────────────┘
+```
+
+Vặn con chạy về phía GND → ADC nhỏ → máy tưởng đang nóng.
+Vặn về phía 5V → ADC lớn → máy tưởng đang lạnh.
+
+Cách này tiện nhất: vừa vặn vừa nhìn Serial Monitor, thấy đúng khoảnh khắc `state=2`
+nhảy sang `state=3` khi qua 55 °C.
+
+### 5.4. Hai vùng cấm
+
+```
+   ADC ≥ 1015  →  temp = -32768  (INVALID)   ← A0 nối thẳng 5V, hoặc NTC đứt dây
+   ADC ≤    8  →  temp = -32768  (INVALID)   ← A0 nối thẳng GND, hoặc NTC chập
+```
+
+Đừng cắm A0 thẳng vào 5V hay GND để thử — máy sẽ báo mất cảm biến và **cắt thanh nhiệt
+ngay** (đúng thiết kế, `src/Controller.cpp`). Nhưng cũng chính vì vậy, rút một đầu điện
+trở ra là cách nhanh nhất để test tình huống đứt dây NTC.
+
+**Để hở chân A0 là sai cách test**: ADC đọc số rác, nhiệt độ nhảy loạn, thanh nhiệt đóng
+cắt lung tung. Luôn phải có mạch phân áp ở A0.
+
+---
+
+## 6. Khi sửa code
 
 `src/` ở đây là **bản copy** của `../source_code/src/`. Sửa ở bản gốc rồi đồng bộ lại:
 
