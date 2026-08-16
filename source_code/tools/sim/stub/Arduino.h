@@ -17,6 +17,10 @@ inline int digitalRead(uint8_t p) { return pinRef()[p]; }
 inline void digitalWrite(uint8_t p, uint8_t v) { outRef()[p] = v; }
 inline int analogRead(uint8_t) { return adcRef(); }
 inline uint32_t millis() { return msRef(); }
+// Dong ho cua mo phong do tick() dieu khien, nen delay() la lenh rong.
+// Chi LcdI2c dung tro nay, va chi trong luc khoi tao LCD.
+inline void delay(unsigned long) {}
+inline void delayMicroseconds(unsigned int) {}
 class __FlashStringHelper;
 #define F(s) (reinterpret_cast<const __FlashStringHelper*>(s))
 struct SerialStub {

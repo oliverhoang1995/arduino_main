@@ -13,7 +13,11 @@ pio device monitor               # xem log, 115200
 pio test -e native               # 12 unit test chạy trên PC, không cần board
 ```
 
-Cần PlatformIO (`pip install platformio`). Lần build đầu tự tải toolchain AVR + thư viện `hd44780`.
+Cần PlatformIO (`pip install platformio`). Lần build đầu tự tải toolchain AVR.
+
+**Không dùng thư viện bên thứ ba nào** — LCD I2C là driver tự viết (`src/LcdI2c.cpp`) trên `Wire.h` có sẵn.
+
+Dùng Arduino IDE thay cho PlatformIO: xem `../MayRuaChen/` (sketch đã sắp sẵn, mở là nạp được).
 
 ---
 
@@ -27,6 +31,7 @@ Cần PlatformIO (`pip install platformio`). Lần build đầu tự tải toolc
 | `src/Ntc.h/.cpp`        | NTC 10K → 0.1 °C (median 5 mẫu → EMA → công thức β)                                                         |
 | `src/Controller.h/.cpp` | **Toàn bộ logic**: state machine + auto-fill + điều khiển thanh nhiệt. Không phụ thuộc `Arduino.h` |
 | `src/Ui.h/.cpp`         | LCD 16×2 I2C, chỉ ghi dòng có nội dung thay đổi                                                              |
+| `src/LcdI2c.h/.cpp`     | Driver HD44780 qua PCF8574, chỉ dùng `Wire.h` — thay cho thư viện `hd44780`                                 |
 | `src/main.cpp`          | Nối dây + vòng lặp 4 task. Không chứa logic                                                                   |
 | `test/test_controller/` | 12 unit test                                                                                                        |
 

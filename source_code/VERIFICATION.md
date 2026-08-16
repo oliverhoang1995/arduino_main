@@ -97,7 +97,13 @@ Riêng phép `static_assert(config::kNtcPin == A0)` trong `Io.cpp` sẽ tự ki�
 
 ## 6. Ghi chú kỹ thuật
 
-- Không có `delay()`, không `new` / `malloc` / `String` trong toàn bộ `src/`.
+- Không có `new` / `malloc` / `String` trong toàn bộ `src/`.
+- Không có `delay()` trong vòng lặp. Chỗ duy nhất dùng `delay()` là `LcdI2c::begin()`
+  (~60 ms, chạy một lần trong `setup()`) — chuỗi khởi tạo bắt buộc theo datasheet HD44780.
+- Ghi LCD là thao tác chặn: mỗi dòng 16 ký tự tốn ~4 ms trên I2C 400 kHz, và chỉ xảy ra
+  khi nội dung dòng đó thay đổi (nhiều nhất 250 ms/lần). Chu kỳ điều khiển 20 ms có thể
+  trễ tối đa ~9 ms trong nhịp đó — vẫn còn rất xa ngưỡng 150 ms của yêu cầu tắt bơm khi mở cửa
+  (đo được 80 ms). **Chưa đo trên board thật.**
 - Mọi phép so thời gian dùng `(uint32_t)(now - last) >= period` → đúng khi `millis()` tràn (test #12).
-- `tools/sim/stub/` là bản giả của `Arduino.h` / `Wire.h` / `hd44780` / `unity.h`, **chỉ dùng để verify
+- `tools/sim/stub/` là bản giả của `Arduino.h` / `Wire.h` / `unity.h`, **chỉ dùng để verify
   trên PC**. Firmware thật không đụng tới thư mục này. Xoá `tools/` cũng không ảnh hưởng gì tới build.

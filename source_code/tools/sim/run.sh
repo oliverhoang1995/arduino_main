@@ -4,7 +4,7 @@
 #
 #   ./tools/sim/run.sh
 #
-# stub/ la ban gia cua Arduino.h / Wire.h / hd44780 / unity.h, CHI dung cho may
+# stub/ la ban gia cua Arduino.h / Wire.h / unity.h, CHI dung cho may
 # tinh. Firmware that khong dung den thu muc nay.
 
 set -e
@@ -13,7 +13,7 @@ cd "$(dirname "$0")"
 CXX=${CXX:-c++}
 SRC=../../src
 FLAGS="-std=gnu++17 -Wall -Wextra -Wshadow -I$SRC -Istub"
-FIRMWARE="$SRC/main.cpp $SRC/Io.cpp $SRC/Ntc.cpp $SRC/Ui.cpp $SRC/Controller.cpp"
+FIRMWARE="$SRC/main.cpp $SRC/Io.cpp $SRC/Ntc.cpp $SRC/Ui.cpp $SRC/LcdI2c.cpp $SRC/Controller.cpp"
 
 mkdir -p build
 
