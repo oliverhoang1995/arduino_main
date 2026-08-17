@@ -1,23 +1,41 @@
 # Máy rửa chén thương mại — Arduino Mega 2560
 
-Firmware theo `plans_02/`. Requirement gốc: `documents/requirement01.md`, `documents/requirement02.md`.
+Tài liệu kỹ thuật đầy đủ. Chỉ cần nạp máy bằng Arduino IDE thì đọc `README.md`.
+
+Firmware theo `../plans_02/`. Requirement gốc: `../documents/requirement01.md`,
+`../documents/requirement02.md`.
 
 ---
 
 ## 1. Build / nạp / test
 
+Có 3 cách, dùng chung một bản mã nguồn `src/`. **Không dùng thư viện bên thứ ba nào** —
+LCD I2C là driver tự viết (`src/LcdI2c.cpp`) trên `Wire.h` có sẵn.
+
+**a) Arduino IDE** — cách mặc định, xem `README.md`. Mở `MayRuaChen.ino`, chọn board
+Mega 2560, Upload. IDE chỉ biên dịch `MayRuaChen.ino` + `src/` (đệ quy) và **bỏ qua**
+`test/`, `tools/`.
+
+**b) arduino-cli** — build không cần mở IDE:
+
 ```bash
-pio run -e mega2560              # build firmware
-pio run -e mega2560 -t upload    # nạp board
-pio device monitor               # xem log, 115200
-pio test -e native               # 12 unit test chạy trên PC, không cần board
+arduino-cli compile -b arduino:avr:mega .
+arduino-cli upload  -b arduino:avr:mega -p /dev/tty.usbmodemXXXX .
 ```
 
-Cần PlatformIO (`pip install platformio`). Lần build đầu tự tải toolchain AVR.
+**c) Kiểm chứng trên PC** — 13 unit test + đo số liệu + mô phỏng end-to-end, không cần
+board, chỉ cần một trình biên dịch C++17:
 
-**Không dùng thư viện bên thứ ba nào** — LCD I2C là driver tự viết (`src/LcdI2c.cpp`) trên `Wire.h` có sẵn.
+```bash
+./tools/sim/run.sh
+```
 
-Dùng Arduino IDE thay cho PlatformIO: xem `../MayRuaChen/` (sketch đã sắp sẵn, mở là nạp được).
+PlatformIO là tuỳ chọn (`pip install platformio`), `platformio.ini` đã cấu hình sẵn:
+
+```bash
+pio run -e mega2560 -t upload    # nạp board
+pio test -e native               # unit test trên PC
+```
 
 ---
 

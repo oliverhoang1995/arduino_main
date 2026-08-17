@@ -1,8 +1,13 @@
-# MayRuaChen — bản dùng cho Arduino IDE
+# MayRuaChen — hướng dẫn nạp bằng Arduino IDE
 
-Đây là **bản sketch của Arduino IDE**, nội dung code giống hệt `source_code/src/`
-(bản gốc dùng PlatformIO). Mở bằng Arduino IDE là build + nạp được ngay,
-**không cần cài thư viện nào**.
+Mở bằng Arduino IDE là build + nạp được ngay, **không cần cài thư viện nào**.
+
+Thư mục này là **nơi duy nhất chứa mã nguồn** (`src/`), không còn bản copy nào khác.
+
+- **README.md** (file này) — nạp máy bằng Arduino IDE, nối dây, sơ đồ NTC.
+- **README01.md** — tài liệu đầy đủ: kiến trúc file, logic điều khiển, format log
+  Serial, cách chạy unit test + mô phỏng trên PC, bảng số liệu đã đo.
+- **VERIFICATION.md** — kết quả kiểm chứng đối chiếu với requirement.
 
 ---
 
@@ -57,7 +62,7 @@ Nếu LCD sáng đèn nhưng không ra chữ / ra ký tự rác:
 
 ## 4. Nối dây (tóm tắt)
 
-Đầy đủ + 3 lưu ý điện bắt buộc: xem `../source_code/README.md` mục 3.
+Đầy đủ + 3 lưu ý điện bắt buộc: xem `README01.md` mục 3.
 
 | Vào (INPUT_PULLUP, tiếp điểm về GND) | Pin |  | Ra (relay active-LOW)  | Pin       |
 | ----------------------------------------- | --- | - | ---------------------- | --------- |
@@ -185,11 +190,17 @@ cắt lung tung. Luôn phải có mạch phân áp ở A0.
 
 ## 6. Khi sửa code
 
-`src/` ở đây là **bản copy** của `../source_code/src/`. Sửa ở bản gốc rồi đồng bộ lại:
+Sửa thẳng trong `src/` — chỉ có một bản duy nhất, không phải đồng bộ đi đâu cả.
+
+Sửa xong, chạy bộ kiểm chứng trên PC **trước khi nạp board** (chỉ cần một trình biên
+dịch C++17, không cần Arduino IDE cũng không cần board):
 
 ```bash
-cp ../source_code/src/*.h ../source_code/src/*.cpp src/
+./tools/sim/run.sh
 ```
 
-Bản gốc còn có 12 unit test + mô phỏng chạy trên PC (`../source_code/tools/sim/run.sh`),
-Arduino IDE không chạy được phần đó.
+Nó chạy 13 unit test + đo số liệu + mô phỏng end-to-end toàn bộ chu trình. Arduino IDE
+không chạy được phần này, và IDE cũng **bỏ qua hoàn toàn** `test/` với `tools/` khi biên
+dịch sketch — chỉ `MayRuaChen.ino` và `src/` được đưa vào firmware.
+
+Chi tiết cách đọc kết quả: `README01.md`.

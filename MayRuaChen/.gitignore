@@ -1,0 +1,6 @@
+.pio/
+.vscode/
+
+# Ket qua bien dich - sinh lai duoc, khong dua vao git.
+build/
+tools/sim/build/
