@@ -40,12 +40,18 @@ void Io::begin(uint32_t nowMs) {
     setupInput(config::kBoilerFloat);
     setupInput(config::kBtnPower);
 
-    // Nhan trang thai thuc te luc khoi dong: bon dang can thi biet ngay,
-    // khong phai cho 3 giay xac nhan.
-    door_.begin(readRaw(config::kDoor), nowMs);
-    tank_.begin(readRaw(config::kTankFloat), nowMs);
-    boiler_.begin(readRaw(config::kBoilerFloat), nowMs);
-    power_.begin(readRaw(config::kBtnPower), nowMs);
+    // MAC DINH TAT CA LA false: luc khoi dong may coi nhu chua co tin hieu nao
+    // (cua MO, ca 2 bon THIEU nuoc, khong ai bam nut). Chi khi tiep diem thuc su
+    // dong va giu du thoi gian xac nhan thi poll() moi doi sang true.
+    //
+    // Co y KHONG doc chan tai day: pull-up noi 20-50k nap dien dung day rat cham,
+    // lan doc dau tien ngay sau pinMode() de ra LOW gia neu day di dai trong tu.
+    // Xuat phat tu false thi khong the sai theo chieu nguy hiem: bon bi coi la
+    // thieu nuoc => cam gia nhiet, khong bao gio dun can.
+    door_.begin(false, nowMs);
+    tank_.begin(false, nowMs);
+    boiler_.begin(false, nowMs);
+    power_.begin(false, nowMs);
     powerEvent_ = false;
 }
 
@@ -63,8 +69,8 @@ void Io::poll(uint32_t nowMs) {
 Inputs Io::read(int16_t tempDeci) {
     Inputs in;
     in.doorClosed = door_.isActive();
-    in.tankLow = tank_.isActive();
-    in.boilerLow = boiler_.isActive();
+    in.tankFull = tank_.isActive();
+    in.boilerFull = boiler_.isActive();
     in.powerPressed = powerEvent_;
     in.tempDeci = tempDeci;
     powerEvent_ = false;

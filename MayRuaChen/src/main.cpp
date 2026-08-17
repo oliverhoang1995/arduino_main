@@ -17,6 +17,7 @@ static Controller controller;
 static Ui ui;
 
 static Inputs lastInputs;
+static State lastState = State::Standby;
 
 static uint32_t tInput = 0;
 static uint32_t tNtc = 0;
@@ -40,8 +41,8 @@ static void logOnChange(uint32_t nowMs, const Inputs& in, const Outputs& out, St
     static Inputs prevIn;
     static Outputs prevOut;
 
-    const bool inChanged = in.doorClosed != prevIn.doorClosed || in.tankLow != prevIn.tankLow ||
-                           in.boilerLow != prevIn.boilerLow;
+    const bool inChanged = in.doorClosed != prevIn.doorClosed || in.tankFull != prevIn.tankFull ||
+                           in.boilerFull != prevIn.boilerFull;
     const bool outChanged = out.washPump != prevOut.washPump || out.rinsePump != prevOut.rinsePump ||
                             out.heater != prevOut.heater || out.tankValve != prevOut.tankValve ||
                             out.boilerValve != prevOut.boilerValve;
@@ -62,9 +63,9 @@ static void logOnChange(uint32_t nowMs, const Inputs& in, const Outputs& out, St
     Serial.print(F(",door="));
     Serial.print(in.doorClosed ? 'C' : 'O');
     Serial.print(F(",tank="));
-    Serial.print(in.tankLow ? 'L' : 'F');
+    Serial.print(in.tankFull ? 'F' : 'L');
     Serial.print(F(",boiler="));
-    Serial.print(in.boilerLow ? 'L' : 'F');
+    Serial.print(in.boilerFull ? 'F' : 'L');
     Serial.print(F(",out="));
     Serial.print(out.washPump ? 'W' : '-');
     Serial.print(out.rinsePump ? 'R' : '-');
@@ -86,6 +87,7 @@ void setup() {
     }
 
     lastInputs = io.read(ntc.deci());
+    lastState = controller.state();
     tInput = tNtc = tControl = tUi = now;
 }
 
@@ -103,6 +105,14 @@ void loop() {
         const Outputs out = controller.update(lastInputs, now);
         io.write(out);
         logOnChange(now, lastInputs, out, controller.state());
+
+        // Doi state (dong cua -> WASH, het gio -> RINSE...) phai len LCD NGAY,
+        // khong doi het chu ky 250 ms cua task UI.
+        if (controller.state() != lastState) {
+            lastState = controller.state();
+            ui.show(lastState, lastInputs, controller.stepRemainingSec(now));
+            tUi = now;
+        }
     }
     if (due(tUi, config::kUiPeriodMs, now)) {
         ui.show(controller.state(), lastInputs, controller.stepRemainingSec(now));

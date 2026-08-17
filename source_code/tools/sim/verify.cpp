@@ -98,8 +98,8 @@ int main() {
         }
         msRef() = 0;
         contact(config::kDoor.pin, false);
-        contact(config::kTankFloat.pin, false);    // 2 bon day
-        contact(config::kBoilerFloat.pin, false);
+        contact(config::kTankFloat.pin, true);    // 2 bon day (closed = DU nuoc)
+        contact(config::kBoilerFloat.pin, true);
         adcRef() = adcForTemp(80.0);
         setup();
 
@@ -125,8 +125,8 @@ int main() {
         }
         msRef() = 0;
         contact(config::kDoor.pin, false);
-        contact(config::kTankFloat.pin, false);
-        contact(config::kBoilerFloat.pin, false);
+        contact(config::kTankFloat.pin, true);
+        contact(config::kBoilerFloat.pin, true);
         adcRef() = adcForTemp(80.0);
         setup();
         contact(config::kBtnPower.pin, true);
@@ -134,10 +134,10 @@ int main() {
         contact(config::kBtnPower.pin, false);
         tick(500);
 
-        contact(config::kTankFloat.pin, true);
+        contact(config::kTankFloat.pin, false);  // phao ha xuong -> THIEU nuoc
         const uint32_t tOpen = waitUntilValve(true, 6000);
         printf("  phao bao thieu -> van mo sau %lu ms (3000 + <= 40 ms quet)\n", (unsigned long)tOpen);
-        contact(config::kTankFloat.pin, false);
+        contact(config::kTankFloat.pin, true);   // phao nhac len -> DU nuoc
         const uint32_t tClose = waitUntilValve(false, 3000);
         printf("  phao bao du    -> van dong sau %lu ms (500 + <= 40 ms quet)\n", (unsigned long)tClose);
 

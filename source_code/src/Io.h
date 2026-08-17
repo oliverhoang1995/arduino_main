@@ -20,9 +20,12 @@ public:
     void write(const Outputs& out) const;
 
 private:
+    // Tham so la {thoi gian de len true, thoi gian de ve false}.
+    // Phao: true = DU nuoc (xac nhan nhanh 500 ms de dong van kip, khong tran),
+    //       false = THIEU nuoc (xac nhan 3000 ms de chong rung phao).
     DebouncedInput door_{config::kDoorClosedConfirmMs, config::kDoorOpenConfirmMs};
-    DebouncedInput tank_{config::kFloatLowConfirmMs, config::kFloatFullConfirmMs};
-    DebouncedInput boiler_{config::kFloatLowConfirmMs, config::kFloatFullConfirmMs};
+    DebouncedInput tank_{config::kFloatFullConfirmMs, config::kFloatLowConfirmMs};
+    DebouncedInput boiler_{config::kFloatFullConfirmMs, config::kFloatLowConfirmMs};
     DebouncedInput power_{config::kButtonDebounceMs, config::kButtonDebounceMs};
     bool powerEvent_ = false;  // giu su kien nhan nut cho toi khi read() lay di
 };

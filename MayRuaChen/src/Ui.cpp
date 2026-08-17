@@ -77,8 +77,8 @@ void Ui::show(State st, const Inputs& in, uint16_t remainSec) {
 
         case State::Fill:
             snprintf(line1, sizeof(line1), "FILLING");
-            snprintf(line2, sizeof(line2), "TANK%s BOIL%s", in.tankLow ? "--" : "++",
-                     in.boilerLow ? "--" : "++");
+            snprintf(line2, sizeof(line2), "TANK%s BOIL%s", in.tankFull ? "++" : "--",
+                     in.boilerFull ? "++" : "--");
             break;
 
         case State::Heat:
@@ -88,8 +88,16 @@ void Ui::show(State st, const Inputs& in, uint16_t remainSec) {
             break;
 
         case State::Ready:
-            snprintf(line1, sizeof(line1), "READY");
-            snprintf(line2, sizeof(line2), "CLOSE THE DOOR");
+            // Ready -> Wash can DU CA 3: du nhiet + cua DONG + 2 bon day.
+            // Hien luon trang thai cua (C/O) va bon de biet dang vuong dieu kien
+            // nao, khong phai cam laptop doc Serial.
+            snprintf(line1, sizeof(line1), "READY   DOOR:%c", in.doorClosed ? 'C' : 'O');
+            if (!in.tankFull || !in.boilerFull) {
+                snprintf(line2, sizeof(line2), "TANK%s BOIL%s", in.tankFull ? "++" : "--",
+                         in.boilerFull ? "++" : "--");
+            } else {
+                snprintf(line2, sizeof(line2), "CLOSE THE DOOR");
+            }
             break;
 
         case State::Wash:

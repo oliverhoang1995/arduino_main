@@ -19,10 +19,13 @@ enum class State : uint8_t {
 };
 
 // Tin hieu vao, DA duoc xac nhan thoi gian o tang Io.
+//
+// Moi truong deu MAC DINH false = "chua co tin hieu". Chi khi tiep diem thuc su
+// dong va giu du thoi gian xac nhan thi Io moi doi sang true.
 struct Inputs {
-    bool doorClosed = false;   // cua dang dong
-    bool tankLow = false;      // Tank thieu nuoc (da xac nhan 3 s)
-    bool boilerLow = false;    // Boiler thieu nuoc (da xac nhan 3 s)
+    bool doorClosed = false;   // false = cua MO       | true = cua DONG (xac nhan 100 ms)
+    bool tankFull = false;     // false = Tank THIEU nuoc  | true = DU nuoc (xac nhan 500 ms)
+    bool boilerFull = false;   // false = Boiler THIEU nuoc| true = DU nuoc (xac nhan 500 ms)
     bool powerPressed = false; // su kien: vua bam nut POWER (chi true 1 lan)
     int16_t tempDeci = 0;      // nhiet do Boiler, 0.1 do C, hoac kTempInvalid
 };

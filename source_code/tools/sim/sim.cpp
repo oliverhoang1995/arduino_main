@@ -8,7 +8,8 @@
 void setup();
 void loop();
 
-// Tiep diem dong = LOW (INPUT_PULLUP)
+// Tiep diem dong = LOW (INPUT_PULLUP).
+// Phao: closed = DU nuoc, open = THIEU nuoc. Cua: closed = DONG.
 static void contact(uint8_t pin, bool closed) { pinRef()[pin] = closed ? LOW : HIGH; }
 
 static bool out(const config::OutputPin& c) {
@@ -76,8 +77,8 @@ int main() {
     }
     // Trang thai ban dau: cua mo, ca 2 bon can, nuoc 20 do C
     contact(config::kDoor.pin, false);
-    contact(config::kTankFloat.pin, true);
-    contact(config::kBoilerFloat.pin, true);
+    contact(config::kTankFloat.pin, false);
+    contact(config::kBoilerFloat.pin, false);
     adcRef() = adcForTemp(g_temp);
 
     setup();
@@ -89,7 +90,7 @@ int main() {
 
     banner("Boiler day o t=20s");
     tick(19000);
-    contact(config::kBoilerFloat.pin, false);
+    contact(config::kBoilerFloat.pin, true);
     tick(400);
     dump("sau 0.4s (chua du 0.5s)");
     tick(200);
@@ -97,7 +98,7 @@ int main() {
 
     banner("Tank day o t=40s");
     tick(20000);
-    contact(config::kTankFloat.pin, false);
+    contact(config::kTankFloat.pin, true);
     tick(600);
     dump("2 bon day -> gia nhiet");
 
@@ -124,9 +125,9 @@ int main() {
     dump("FINISH");
 
     banner("phao Tank rung 1s trong luc dang cho -> KHONG duoc mo van");
-    contact(config::kTankFloat.pin, true);
-    tick(1000);
     contact(config::kTankFloat.pin, false);
+    tick(1000);
+    contact(config::kTankFloat.pin, true);
     tick(1000);
     dump("sau khi rung phao");
 
@@ -139,12 +140,12 @@ int main() {
     dump("cua dong -> WASH chu trinh 2");
 
     banner("thieu nuoc Tank giu 3s trong luc dang RUA");
-    contact(config::kTankFloat.pin, true);
+    contact(config::kTankFloat.pin, false);
     tick(2900);
     dump("moi 2.9s -> van chua mo, bom van chay");
     tick(200);
     dump("du 3s -> van mo, bom VAN chay");
-    contact(config::kTankFloat.pin, false);
+    contact(config::kTankFloat.pin, true);
     tick(700);
     dump("day lai -> van dong, bom van chay");
 

@@ -45,7 +45,7 @@ void Controller::updateReady(int16_t tempDeci) {
 bool Controller::updateHeater(const Inputs& in, uint32_t nowMs, bool enabled) {
     // Dieu kien cung: khong co nuoc trong Boiler hoac khong doc duoc nhiet do
     // thi tuyet doi khong dun (thanh nhiet ho nuoc se chay).
-    const bool safeToHeat = enabled && !in.boilerLow && in.tempDeci != config::kTempInvalid;
+    const bool safeToHeat = enabled && in.boilerFull && in.tempDeci != config::kTempInvalid;
 
     bool want;
     if (!safeToHeat) {
@@ -104,7 +104,7 @@ Outputs Controller::update(const Inputs& in, uint32_t nowMs) {
 
     // 2. State machine tuan tu (plans_02/02-design.md muc 2).
     const uint32_t elapsed = static_cast<uint32_t>(nowMs - stepStartMs_);
-    const bool tanksFull = !in.tankLow && !in.boilerLow;
+    const bool tanksFull = in.tankFull && in.boilerFull;
 
     switch (state_) {
         case State::Standby:
@@ -167,8 +167,8 @@ Outputs Controller::update(const Inputs& in, uint32_t nowMs) {
     //    (requirement01 muc 8, requirement02 muc 3).
     Outputs out;
     const bool running = machineRunning(state_);
-    out.tankValve = running && in.tankLow;
-    out.boilerValve = running && in.boilerLow;
+    out.tankValve = running && !in.tankFull;
+    out.boilerValve = running && !in.boilerFull;
     out.heater = updateHeater(in, nowMs, heatingAllowed(state_));
 
     // 4. Bom cua chu trinh rua.

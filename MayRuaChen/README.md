@@ -35,10 +35,10 @@ dòng `#include` nào, và tránh được việc IDE tự chèn function protot
 
 ## 3. Thư viện: không cần cài gì
 
-| Thư viện  | Nguồn                            |
-| --------- | -------------------------------- |
-| `Wire.h`  | có sẵn trong Arduino IDE         |
-| LCD I2C   | `src/LcdI2c.cpp` — tự viết trong dự án |
+| Thư viện | Nguồn                                        |
+| ---------- | --------------------------------------------- |
+| `Wire.h` | có sẵn trong Arduino IDE                    |
+| LCD I2C    | `src/LcdI2c.cpp` — tự viết trong dự án |
 
 LCD 16×2 chạy qua module I2C PCF8574. Driver tự dò địa chỉ **0x27** rồi **0x3F**
 (hai địa chỉ phổ biến nhất). Không thấy LCD thì máy **vẫn chạy bình thường**,
@@ -46,12 +46,12 @@ chỉ không hiển thị, và Serial in ra `LCD not found`.
 
 Nếu LCD sáng đèn nhưng không ra chữ / ra ký tự rác:
 
-| Hiện tượng                     | Sửa ở đâu                                                     |
-| ------------------------------ | ------------------------------------------------------------- |
-| Không thấy LCD (địa chỉ khác) | `src/Config.h` → `kLcdAddresses`                              |
-| Ký tự rác, cáp I2C đi dài     | `src/Config.h` → `kI2cClockHz` hạ xuống `100000`              |
-| Sáng đèn nhưng trắng trơn     | vặn biến trở tương phản trên lưng module                      |
-| Module nối chân khác chuẩn     | 4 hằng số `kBitRs/kBitEn/kBitBacklight` đầu `src/LcdI2c.cpp`  |
+| Hiện tượng                       | Sửa ở đâu                                                       |
+| ----------------------------------- | ------------------------------------------------------------------- |
+| Không thấy LCD (địa chỉ khác) | `src/Config.h` → `kLcdAddresses`                               |
+| Ký tự rác, cáp I2C đi dài     | `src/Config.h` → `kI2cClockHz` hạ xuống `100000`           |
+| Sáng đèn nhưng trắng trơn     | vặn biến trở tương phản trên lưng module                    |
+| Module nối chân khác chuẩn      | 4 hằng số`kBitRs/kBitEn/kBitBacklight` đầu `src/LcdI2c.cpp` |
 
 ---
 
@@ -59,16 +59,19 @@ Nếu LCD sáng đèn nhưng không ra chữ / ra ký tự rác:
 
 Đầy đủ + 3 lưu ý điện bắt buộc: xem `../source_code/README.md` mục 3.
 
-| Vào (INPUT_PULLUP, tiếp điểm về GND) | Pin |     | Ra (relay active-LOW) | Pin |
-| ------------------------------------ | --- | --- | --------------------- | --- |
-| Cảm biến cửa (ACTIVE = đóng)       | D22 |     | Bơm rửa              | D2  |
-| Phao Tank (ACTIVE = thiếu nước)     | D23 |     | Bơm tráng            | D3  |
-| Phao Boiler (ACTIVE = thiếu nước)   | D24 |     | Thanh nhiệt Boiler    | D4  |
-| Nút POWER                           | D9  |     | Van cấp nước Tank    | D5  |
-| NTC 10K (sơ đồ ở mục 5)            | A0  |     | Van cấp nước Boiler  | D6  |
-|                                      |     |     | LCD I2C SDA / SCL     | D20 / D21 |
+| Vào (INPUT_PULLUP, tiếp điểm về GND) | Pin |  | Ra (relay active-LOW)  | Pin       |
+| ----------------------------------------- | --- | - | ---------------------- | --------- |
+| Cảm biến cửa (ACTIVE = đóng)         | D22 |  | Bơm rửa              | D2        |
+| Phao Tank (ACTIVE = đủ nước)          | D23 |  | Bơm tráng            | D3        |
+| Phao Boiler (ACTIVE = đủ nước)        | D24 |  | Thanh nhiệt Boiler    | D4        |
+| Nút POWER                                | D9  |  | Van cấp nước Tank   | D5        |
+| NTC 10K (sơ đồ ở mục 5)              | A0  |  | Van cấp nước Boiler | D6        |
+|                                           |     |  | LCD I2C SDA / SCL      | D20 / D21 |
 
 Đổi pin, đổi tiếp điểm NO↔NC, đổi relay active-HIGH: **chỉ sửa `src/Config.h`**.
+
+> Phao đấu sao cho **tiếp điểm ĐÓNG khi nước ĐẦY**. Chưa có tín hiệu (đứt dây, tuột giắc,
+> vừa cấp nguồn) = THIẾU nước → mở van, cấm gia nhiệt. Đây là chiều an toàn.
 
 Đấu dây xong mà một tín hiệu không ăn: nạp sketch chẩn đoán `../KiemTraChan/KiemTraChan.ino`,
 nó in ra đúng số hiệu chân đang bị nối GND — biết ngay là cắm nhầm lỗ hay đứt dây.
@@ -130,15 +133,15 @@ Thay đúng con NTC bằng một điện trở thường, **giữ nguyên Rs 10 
    GND ───────┴──────────
 ```
 
-| Rtest    | Điện áp tại A0 | ADC | Nhiệt độ máy đọc | Máy sẽ làm gì                                     |
-| -------- | --------------- | --- | ------------------ | -------------------------------------------------- |
-| 10 kΩ   | 2.50 V          | 512 | 25 °C             | HEAT, thanh nhiệt bật                             |
-| 4.7 kΩ  | 1.60 V          | 327 | 43 °C             | HEAT, thanh nhiệt bật                             |
-| **3.0 kΩ** | **1.15 V**   | **235** | **55 °C**     | vừa chạm ngưỡng → **READY**                    |
-| **2.2 kΩ** | **0.90 V**   | **184** | **63 °C**     | READY, thanh nhiệt vẫn bật — **nên dùng để test** |
-| 1.5 kΩ  | 0.65 V          | 133 | 75 °C             | READY, thanh nhiệt vẫn bật                       |
-| **1.2 kΩ** | **0.54 V**   | **110** | **82 °C**     | điểm thanh nhiệt **bật lại** (setpoint − 3 °C) |
-| **1.0 kΩ** | **0.45 V**   | **93**  | **88 °C**     | trên 85 °C → thanh nhiệt **tắt**                |
+| Rtest             | Điện áp tại A0 | ADC           | Nhiệt độ máy đọc | Máy sẽ làm gì                                              |
+| ----------------- | ------------------ | ------------- | ---------------------- | -------------------------------------------------------------- |
+| 10 kΩ            | 2.50 V             | 512           | 25 °C                 | HEAT, thanh nhiệt bật                                        |
+| 4.7 kΩ           | 1.60 V             | 327           | 43 °C                 | HEAT, thanh nhiệt bật                                        |
+| **3.0 kΩ** | **1.15 V**   | **235** | **55 °C**       | vừa chạm ngưỡng →**READY**                          |
+| **2.2 kΩ** | **0.90 V**   | **184** | **63 °C**       | READY, thanh nhiệt vẫn bật —**nên dùng để test** |
+| 1.5 kΩ           | 0.65 V             | 133           | 75 °C                 | READY, thanh nhiệt vẫn bật                                  |
+| **1.2 kΩ** | **0.54 V**   | **110** | **82 °C**       | điểm thanh nhiệt**bật lại** (setpoint − 3 °C)     |
+| **1.0 kΩ** | **0.45 V**   | **93**  | **88 °C**       | trên 85 °C → thanh nhiệt**tắt**                     |
 
 Cặp **1.2 kΩ và 1.0 kΩ** đáng thử nhất: đổi qua đổi lại giữa hai con này là thấy chữ `H`
 trong log bật/tắt đúng vùng chết 82–85 °C, đồng thời kiểm tra luôn ràng buộc min ON/OFF 5 giây.

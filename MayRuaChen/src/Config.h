@@ -17,9 +17,16 @@ struct InputPin {
     bool invert;
 };
 
+// QUY UOC CHUNG: moi tin hieu MAC DINH la false, chi khi CO tin hieu that
+// (tiep diem dong ve GND, da qua thoi gian xac nhan) thi moi thanh true.
+//   cua    : false = MO      -> true = DONG
+//   phao   : false = THIEU nuoc -> true = DU nuoc
+// => phao phai dau sao cho tiep diem DONG khi nuoc DAY (phao NO, nhac len thi
+//    dong). Dut day / tuot giac = false = thieu nuoc: may mo van cap va CAM
+//    gia nhiet, day la chieu an toan (khong bao gio dun can).
 constexpr InputPin kDoor{22, false};         // ACTIVE = cua DONG
-constexpr InputPin kTankFloat{23, false};    // ACTIVE = Tank THIEU nuoc
-constexpr InputPin kBoilerFloat{24, false};  // ACTIVE = Boiler THIEU nuoc
+constexpr InputPin kTankFloat{23, false};    // ACTIVE = Tank DU nuoc
+constexpr InputPin kBoilerFloat{24, false};  // ACTIVE = Boiler DU nuoc
 constexpr InputPin kBtnPower{9, false};      // ACTIVE = dang nhan
 
 // Nut POWER doi tu D26 sang D9: D9 nam tren hang chan don D0-D13, so in tren
@@ -57,8 +64,8 @@ constexpr int16_t kReadyDeci = 550;       // 55.0 do C - nguong cho phep vao chu
 constexpr int16_t kReadyHystDeci = 10;    // 1.0 do C - chong nhay qua lai quanh nguong
 
 // ----------------------------------------------------- xac nhan tin hieu (ms)
-constexpr uint16_t kFloatLowConfirmMs = 3000;    // requirement01 muc 8: chong rung phao
-constexpr uint16_t kFloatFullConfirmMs = 500;    // dong van nhanh de khong tran
+constexpr uint16_t kFloatLowConfirmMs = 3000;    // true->false (bao THIEU nuoc): requirement01 muc 8, chong rung phao
+constexpr uint16_t kFloatFullConfirmMs = 500;    // false->true (bao DU nuoc): dong van nhanh de khong tran
 constexpr uint16_t kDoorClosedConfirmMs = 100;
 constexpr uint16_t kDoorOpenConfirmMs = 50;      // mo cua phai nhan ra nhanh (tat bom)
 constexpr uint16_t kButtonDebounceMs = 30;

@@ -31,7 +31,7 @@ Dùng Arduino IDE thay cho PlatformIO: xem `../MayRuaChen/` (sketch đã sắp s
 | `src/Ntc.h/.cpp`        | NTC 10K → 0.1 °C (median 5 mẫu → EMA → công thức β)                                                         |
 | `src/Controller.h/.cpp` | **Toàn bộ logic**: state machine + auto-fill + điều khiển thanh nhiệt. Không phụ thuộc `Arduino.h` |
 | `src/Ui.h/.cpp`         | LCD 16×2 I2C, chỉ ghi dòng có nội dung thay đổi                                                              |
-| `src/LcdI2c.h/.cpp`     | Driver HD44780 qua PCF8574, chỉ dùng `Wire.h` — thay cho thư viện `hd44780`                                 |
+| `src/LcdI2c.h/.cpp`     | Driver HD44780 qua PCF8574, chỉ dùng`Wire.h` — thay cho thư viện `hd44780`                                 |
 | `src/main.cpp`          | Nối dây + vòng lặp 4 task. Không chứa logic                                                                   |
 | `test/test_controller/` | 12 unit test                                                                                                        |
 
@@ -44,12 +44,18 @@ Dùng Arduino IDE thay cho PlatformIO: xem `../MayRuaChen/` (sketch đã sắp s
 | Tín hiệu      | Pin | ACTIVE (tiếp điểm đóng) nghĩa là                    |
 | --------------- | --- | ---------------------------------------------------------- |
 | Cảm biến cửa | D22 | cửa**đóng**                                       |
-| Phao Tank       | D23 | Tank**thiếu** nước                                |
-| Phao Boiler     | D24 | Boiler**thiếu** nước                              |
+| Phao Tank       | D23 | Tank**đủ** nước                                  |
+| Phao Boiler     | D24 | Boiler**đủ** nước                                |
 | Nút POWER      | D9  | đang nhấn                                                |
 | NTC 10K         | A0  | 5V — Rs 10 kΩ 1% — A0 — NTC — GND, tụ 100 nF tại A0 |
 
 Nếu tiếp điểm là **NC** thay vì NO: đổi `invert` thành `true` trong `Config.h`, không sửa code.
+
+> **Quy ước tín hiệu:** mọi input mặc định là `false` (chưa có tín hiệu) — cửa MỞ, 2 bồn THIẾU nước.
+> Chỉ khi tiếp điểm thực sự đóng và giữ đủ thời gian xác nhận thì mới thành `true`.
+> Vì vậy **phao phải đấu sao cho tiếp điểm ĐÓNG khi nước ĐẦY** (phao NO, nhấc lên thì đóng).
+> Đứt dây / tuột giắc = thiếu nước → máy mở van cấp và **cấm gia nhiệt**; đây là chiều an toàn,
+> không bao giờ đun cạn.
 
 D25 (MODE), D27 (UP), D28 (DOWN): chưa dùng (Q-02 — sẽ làm sau).
 

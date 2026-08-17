@@ -1,0 +1,9 @@
+{
+  "additionalFiles": "../..,../../..,../../..,../../..,../../..,../../..,../../..,../../..,../../..,../../..,../../..,../../..,../../..,../../..",
+  "compiler.optimization_flags": "",
+  "customBuildProperties": "",
+  "fqbn": "arduino:avr:mega",
+  "hardwareFolders": "/Users/thaoluong/Library/Arduino15/packages/arduino/hardware/avr/1.8.8,/Users/thaoluong/Library/Arduino15/packages/arduino/hardware/avr/1.8.8",
+  "otherLibrariesFolders": "/Users/thaoluong/Documents/Arduino/libraries",
+  "sketchLocation": "/Users/thaoluong/Documents/01.work/projects/outsourcing/arduino_main/MayRuaChen"
+}

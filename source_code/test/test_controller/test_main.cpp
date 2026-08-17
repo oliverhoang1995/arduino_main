@@ -20,7 +20,11 @@ static int stateIs(State s) { return static_cast<int>(s); }
 static void reset(uint32_t startMs = 0) {
     now = startMs;
     ctl.begin(now);
-    in = Inputs();
+    in = Inputs();  // moi tin hieu mac dinh false: cua MO, 2 bon THIEU nuoc
+    // Diem xuat phat chung cua phan lon test la "2 bon da du nuoc"; test nao can
+    // trang thai thieu nuoc thi tu dat lai false.
+    in.tankFull = true;
+    in.boilerFull = true;
     in.tempDeci = 200;  // 20.0 do C
     out = ctl.update(in, now);
 }
@@ -43,8 +47,8 @@ static void pressPower() {
 // Dua may toi READY: 2 bon day, 60.0 do C, cua dang mo.
 static void gotoReady(uint32_t startMs = 0) {
     reset(startMs);
-    in.tankLow = false;
-    in.boilerLow = false;
+    in.tankFull = true;
+    in.boilerFull = true;
     in.doorClosed = false;
     in.tempDeci = 600;
     pressPower();
@@ -54,39 +58,43 @@ static void gotoReady(uint32_t startMs = 0) {
 
 // ---------------------------------------------------------------------------
 // 1. Phao thieu nuoc phai giu du 3 giay moi duoc cong nhan (requirement01 muc 8)
+//
+// Cuc tinh phao: true = DU nuoc, false = THIEU nuoc. Tham so phai giong het
+// tank_/boiler_ trong Io.h.
 // ---------------------------------------------------------------------------
 static void test_float_needs_3s_to_confirm() {
-    DebouncedInput f(config::kFloatLowConfirmMs, config::kFloatFullConfirmMs);
-    f.begin(false, 0);
+    DebouncedInput f(config::kFloatFullConfirmMs, config::kFloatLowConfirmMs);
+    f.begin(true, 0);  // dang du nuoc
 
+    // Bao thieu nuoc: phai giu du 3000 ms moi duoc cong nhan.
     for (uint32_t t = 0; t <= 2980; t += 20) {
-        f.update(true, t);
+        f.update(false, t);
     }
-    TEST_ASSERT_FALSE(f.isActive());
-    f.update(true, 2999);
-    TEST_ASSERT_FALSE(f.isActive());
-    f.update(true, 3000);
     TEST_ASSERT_TRUE(f.isActive());
+    f.update(false, 2999);
+    TEST_ASSERT_TRUE(f.isActive());
+    f.update(false, 3000);
+    TEST_ASSERT_FALSE(f.isActive());
 
     // Chieu nguoc lai chi can 500 ms de dong van kip, khong tran.
-    f.update(false, 3000);
-    f.update(false, 3499);
-    TEST_ASSERT_TRUE(f.isActive());
-    f.update(false, 3500);
+    f.update(true, 3000);
+    f.update(true, 3499);
     TEST_ASSERT_FALSE(f.isActive());
+    f.update(true, 3500);
+    TEST_ASSERT_TRUE(f.isActive());
 }
 
 // ---------------------------------------------------------------------------
 // 2. Phao rung lien tuc thi khong bao gio duoc cong nhan la thieu nuoc
 // ---------------------------------------------------------------------------
 static void test_float_bouncing_never_confirms() {
-    DebouncedInput f(config::kFloatLowConfirmMs, config::kFloatFullConfirmMs);
-    f.begin(false, 0);
+    DebouncedInput f(config::kFloatFullConfirmMs, config::kFloatLowConfirmMs);
+    f.begin(true, 0);  // dang du nuoc
 
     for (uint32_t t = 0; t < 10000; t += 20) {
         const bool raw = ((t / 250) % 2) == 0;  // dao trang thai moi 250 ms
         f.update(raw, t);
-        TEST_ASSERT_FALSE(f.isActive());
+        TEST_ASSERT_TRUE(f.isActive());  // van la "du nuoc", khong mo van
     }
 }
 
@@ -128,7 +136,7 @@ static void test_heater_off_when_boiler_low() {
     step(200);
     TEST_ASSERT_TRUE(out.heater);
 
-    in.boilerLow = true;
+    in.boilerFull = false;
     step(20);  // dung mot chu ky dieu khien
     TEST_ASSERT_FALSE(out.heater);
     TEST_ASSERT_TRUE(out.boilerValve);  // dong thoi mo van cap nuoc Boiler
@@ -154,8 +162,8 @@ static void test_heater_off_when_temp_invalid() {
 // ---------------------------------------------------------------------------
 static void test_no_heating_while_filling() {
     reset();
-    in.tankLow = true;
-    in.boilerLow = false;
+    in.tankFull = false;
+    in.boilerFull = true;
     in.tempDeci = 200;
     pressPower();
     step(1000);
@@ -165,7 +173,7 @@ static void test_no_heating_while_filling() {
     TEST_ASSERT_TRUE(out.tankValve);
     TEST_ASSERT_FALSE(out.boilerValve);
 
-    in.tankLow = false;  // Tank day -> chuyen sang gia nhiet
+    in.tankFull = true;  // Tank day -> chuyen sang gia nhiet
     step(40);
     TEST_ASSERT_EQUAL_INT(stateIs(State::Heat), st());
     TEST_ASSERT_TRUE(out.heater);
@@ -223,13 +231,13 @@ static void test_fill_while_washing_does_not_stop_cycle() {
     TEST_ASSERT_EQUAL_INT(stateIs(State::Wash), st());
 
     step(20000);
-    in.tankLow = true;  // phao Tank bao thieu (da xac nhan 3 s o tang Io)
+    in.tankFull = false;  // phao Tank bao thieu (da xac nhan 3 s o tang Io)
     step(20);
     TEST_ASSERT_TRUE(out.tankValve);
     TEST_ASSERT_TRUE(out.washPump);
     TEST_ASSERT_EQUAL_INT(stateIs(State::Wash), st());
 
-    in.tankLow = false;
+    in.tankFull = true;
     step(20);
     TEST_ASSERT_FALSE(out.tankValve);
     TEST_ASSERT_TRUE(out.washPump);
@@ -248,7 +256,7 @@ static void test_fill_while_washing_does_not_stop_cycle() {
     // Tuong tu voi Boiler khi dang trang.
     step(5000);
     TEST_ASSERT_EQUAL_INT(stateIs(State::Rinse), st());
-    in.boilerLow = true;
+    in.boilerFull = false;
     step(20);
     TEST_ASSERT_TRUE(out.boilerValve);
     TEST_ASSERT_TRUE(out.rinsePump);
@@ -259,8 +267,8 @@ static void test_fill_while_washing_does_not_stop_cycle() {
 // ---------------------------------------------------------------------------
 static void test_no_wash_below_ready_temperature() {
     reset();
-    in.tankLow = false;
-    in.boilerLow = false;
+    in.tankFull = true;
+    in.boilerFull = true;
     in.doorClosed = true;
     in.tempDeci = 549;  // 54.9 do C
     pressPower();
@@ -318,7 +326,7 @@ static void test_power_button_stops_everything() {
     gotoReady();
     in.doorClosed = true;
     step(20);
-    in.tankLow = true;
+    in.tankFull = false;
     step(4000);
     TEST_ASSERT_TRUE(out.washPump);
 
@@ -354,6 +362,47 @@ static void test_millis_overflow() {
     TEST_ASSERT_EQUAL_INT(stateIs(State::Finish), st());
 }
 
+// ---------------------------------------------------------------------------
+// 13. Gia tri MAC DINH luc khoi dong: moi tin hieu = false, va do la chieu
+//     an toan (chua co tin hieu => coi nhu thieu nuoc => cam gia nhiet)
+// ---------------------------------------------------------------------------
+static void test_default_inputs_are_all_false() {
+    const Inputs d;
+    TEST_ASSERT_FALSE(d.doorClosed);   // cua MO
+    TEST_ASSERT_FALSE(d.tankFull);     // Tank THIEU nuoc
+    TEST_ASSERT_FALSE(d.boilerFull);   // Boiler THIEU nuoc
+    TEST_ASSERT_FALSE(d.powerPressed);
+
+    // Chua bam POWER: 5 output deu tat du 2 bon dang bao thieu nuoc.
+    now = 0;
+    ctl.begin(now);
+    in = Inputs();
+    in.tempDeci = 200;
+    out = ctl.update(in, now);
+    TEST_ASSERT_EQUAL_INT(stateIs(State::Standby), st());
+    TEST_ASSERT_FALSE(out.tankValve);
+    TEST_ASSERT_FALSE(out.boilerValve);
+    TEST_ASSERT_FALSE(out.heater);
+
+    // Bam POWER: vao Fill, mo CA 2 van, tuyet doi khong gia nhiet.
+    pressPower();
+    step(5000);
+    TEST_ASSERT_EQUAL_INT(stateIs(State::Fill), st());
+    TEST_ASSERT_TRUE(out.tankValve);
+    TEST_ASSERT_TRUE(out.boilerValve);
+    TEST_ASSERT_FALSE(out.heater);
+
+    // Co tin hieu -> moi doi sang true; du ca 2 bon thi moi qua Heat.
+    in.tankFull = true;
+    step(40);
+    TEST_ASSERT_EQUAL_INT(stateIs(State::Fill), st());
+    TEST_ASSERT_FALSE(out.heater);
+    in.boilerFull = true;
+    step(40);
+    TEST_ASSERT_EQUAL_INT(stateIs(State::Heat), st());
+    TEST_ASSERT_TRUE(out.heater);
+}
+
 void setUp() {}
 void tearDown() {}
 
@@ -371,5 +420,6 @@ int main(int, char**) {
     RUN_TEST(test_open_door_aborts_cycle);
     RUN_TEST(test_power_button_stops_everything);
     RUN_TEST(test_millis_overflow);
+    RUN_TEST(test_default_inputs_are_all_false);
     return UNITY_END();
 }
